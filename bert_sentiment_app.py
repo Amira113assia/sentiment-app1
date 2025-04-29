@@ -1,36 +1,53 @@
+# ✅ الكود الأصلي بدون تصميم احترافي
+
 import streamlit as st
 from transformers import pipeline
 
-st.set_page_config(page_title="BERT Sentiment Analyzer", page_icon="💬", layout="wide")
+# تحميل نموذج RoBERTa
+sentiment_pipeline = pipeline("sentiment-analysis", model="cardiffnlp/twitter-roberta-base-sentiment")
 
-st.markdown("<h1 style='text-align: center; color: #4B8BBE;'>🔍 BERT Sentiment Analysis App</h1>", unsafe_allow_html=True)
-st.markdown("<h4 style='text-align: center; color: grey;'>Analyze sentiment (Positive, Neutral, Negative) using BERT model</h4>", unsafe_allow_html=True)
+st.title("تحليل المشاعر باستخدام RoBERTa")
 
-# تحميل نموذج BERT للتحليل
-@st.cache_resource
-def load_model():
-    return pipeline("sentiment-analysis", model="nlptown/bert-base-multilingual-uncased-sentiment")
+text = st.text_input("أدخل جملة لتحليل المشاعر:")
 
-nlp = load_model()
-
-# واجهة المستخدم
-text_input = st.text_area("📝 أدخل نصًا لتحليله", height=150)
-
-if st.button("🔍 تحليل"):
-    if text_input.strip() != "":
-        with st.spinner("جارٍ التحليل..."):
-            result = nlp(text_input)
-            label = result[0]['label']
-            score = result[0]['score']
-
-            st.markdown(f"### ✅ النتيجة: **{label}**")
-            st.markdown(f"### 🔢 النسبة: `{round(score*100, 2)}%`")
-
-            if "1" in label or "2" in label:
-                st.error("😞 سلبي")
-            elif "3" in label:
-                st.info("😐 محايد")
-            else:
-                st.success("😊 إيجابي")
+if st.button("تحليل"):
+    if text:
+        result = sentiment_pipeline(text)[0]
+        st.write(f"النتيجة: {result['label']} (بثقة {round(result['score'], 2)})")
     else:
-        st.warning("من فضلك أدخل نصاً أولاً ❗")
+        st.warning("يرجى إدخال جملة أولاً")
+
+
+# ✅ الكود بعد التعديل بواجهة احترافية
+
+import streamlit as st
+from transformers import pipeline
+
+# تحميل نموذج RoBERTa
+sentiment_pipeline = pipeline("sentiment-analysis", model="cardiffnlp/twitter-roberta-base-sentiment")
+
+def analyze_sentiment(text):
+    result = sentiment_pipeline(text)[0]
+    return result['label'], result['score']
+
+# 💡 تصميم احترافي
+st.markdown("""
+    <h1 style='text-align: center; color: #4CAF50;'>💬 RoBERTa Sentiment Analyzer</h1>
+    <p style='text-align: center;'>أدخل جملة باللغة الإنجليزية وسنحللها لك</p>
+""", unsafe_allow_html=True)
+
+user_input = st.text_area("👇 اكتب جملتك هنا:", height=150)
+
+if st.button("🔍 تحليل المشاعر"):
+    if user_input.strip():
+        label, score = analyze_sentiment(user_input)
+
+        if label == "LABEL_2":
+            st.success(f"💚 النتيجة: إيجابي (ثقة {round(score, 2)})")
+        elif label == "LABEL_0":
+            st.error(f"💔 النتيجة: سلبي (ثقة {round(score, 2)})")
+        else:
+            st.info(f"😐 النتيجة: محايد (ثقة {round(score, 2)})")
+    else:
+        st.warning("⚠️ من فضلك أدخل جملة أولاً.")
+
