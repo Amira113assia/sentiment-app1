@@ -1,26 +1,36 @@
 import streamlit as st
 from transformers import pipeline
 
-# تحميل نموذج BERT لتحليل المشاعر
-sentiment_pipeline = pipeline("sentiment-analysis")
+st.set_page_config(page_title="BERT Sentiment Analyzer", page_icon="💬", layout="wide")
 
-# عنوان التطبيق
-st.title("تحليل المشاعر باستخدام BERT")
-st.write("📍 هذا التطبيق يحلل ما إذا كان النص سلبيًا أو إيجابيًا أو محايدًا.")
+st.markdown("<h1 style='text-align: center; color: #4B8BBE;'>🔍 BERT Sentiment Analysis App</h1>", unsafe_allow_html=True)
+st.markdown("<h4 style='text-align: center; color: grey;'>Analyze sentiment (Positive, Neutral, Negative) using BERT model</h4>", unsafe_allow_html=True)
 
-# إدخال المستخدم
-user_input = st.text_area("أدخل نصًا هنا:")
+# تحميل نموذج BERT للتحليل
+@st.cache_resource
+def load_model():
+    return pipeline("sentiment-analysis", model="nlptown/bert-base-multilingual-uncased-sentiment")
 
-# زر التحليل
+nlp = load_model()
+
+# واجهة المستخدم
+text_input = st.text_area("📝 أدخل نصًا لتحليله", height=150)
+
 if st.button("🔍 تحليل"):
-    if user_input.strip() != "":
-        result = sentiment_pipeline(user_input)[0]
-        label = result['label']
-        score = result['score']
+    if text_input.strip() != "":
+        with st.spinner("جارٍ التحليل..."):
+            result = nlp(text_input)
+            label = result[0]['label']
+            score = result[0]['score']
 
-        # عرض النتيجة
-        st.subheader("📊 النتيجة:")
-        st.write(f"**التصنيف**: {label}")
-        st.write(f"**درجة الثقة**: {score:.2f}")
+            st.markdown(f"### ✅ النتيجة: **{label}**")
+            st.markdown(f"### 🔢 النسبة: `{round(score*100, 2)}%`")
+
+            if "1" in label or "2" in label:
+                st.error("😞 سلبي")
+            elif "3" in label:
+                st.info("😐 محايد")
+            else:
+                st.success("😊 إيجابي")
     else:
-        st.warning("⚠️ الرجاء إدخال نص قبل التحليل.")
+        st.warning("من فضلك أدخل نصاً أولاً ❗")
