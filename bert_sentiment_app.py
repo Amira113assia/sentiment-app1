@@ -1,38 +1,42 @@
 import streamlit as st
-from transformers import pipeline
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import TextClassificationPipeline
+import torch
+import numpy as np
 
-# إعداد الواجهة
-st.set_page_config(page_title="RoBERTa Sentiment Analyzer", page_icon="🤖", layout="wide")
-
-st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🤖 RoBERTa Sentiment Analysis App</h1>", unsafe_allow_html=True)
+# إعداد الصفحة
+st.set_page_config(page_title="RoBERTa Sentiment", page_icon="🤖", layout="wide")
+st.markdown("<h1 style='text-align: center; color: #6A5ACD;'>🔍 Application d'Analyse des Sentiments RoBERTa 🔍</h1>", unsafe_allow_html=True)
 st.markdown("<h4 style='text-align: center; color: grey;'>Analyse des sentiments (Positif, Neutre, Négatif) avec le modèle RoBERTa</h4>", unsafe_allow_html=True)
 
-# تحميل نموذج RoBERTa المدرب على تويتر
+# تحميل النموذج و Tokenizer
 @st.cache_resource
-def load_model():
-    return pipeline("sentiment-analysis", model="cardiffnlp/twitter-roberta-base-sentiment")
+def load_roberta():
+    model_name = "cardiffnlp/twitter-roberta-base-sentiment"
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForSequenceClassification.from_pretrained(model_name)
+    return tokenizer, model
 
-nlp = load_model()
+tokenizer, model = load_roberta()
 
-# إدخال المستخدم
-text_input = st.text_area("📝 Entrez un texte à analyser", height=150)
+# إنشاء pipeline يدوي
+def analyze_sentiment(text):
+    encoded_input = tokenizer(text, return_tensors='pt', truncation=True)
+    with torch.no_grad():
+        output = model(**encoded_input)
+    scores = torch.nn.functional.softmax(output.logits, dim=1).numpy()[0]
+    labels = ['Négatif 😞', 'Neutre 😐', 'Positif 😀']
+    max_idx = np.argmax(scores)
+    return labels[max_idx], scores[max_idx]
+
+# واجهة المستخدم
+text = st.text_area("📝 Entrez un texte à analyser", height=150)
 
 if st.button("🔍 Analyser"):
-    if text_input.strip() != "":
+    if text.strip() != "":
         with st.spinner("Analyse en cours..."):
-            result = nlp(text_input)[0]
-            label = result['label']
-            score = result['score']
-
-            # الترجمة حسب RoBERTa
-            if label == "LABEL_0":
-                sentiment = "😞 Négatif"
-            elif label == "LABEL_1":
-                sentiment = "😐 Neutre"
-            else:
-                sentiment = "😊 Positif"
-
-            st.markdown(f"### ✅ Résultat: {sentiment}")
-            st.markdown(f"### 📊 Score: `{score:.2%}`")
+            label, score = analyze_sentiment(text)
+            st.markdown(f"### ✅ Résultat : **{label}**")
+            st.markdown(f"### 🔢 Score : `{score*100:.2f}%`")
     else:
-        st.warning("Veuillez entrer un texte d'abord ❗")
+        st.warning("❗ Veuillez entrer un texte d'abord.")
