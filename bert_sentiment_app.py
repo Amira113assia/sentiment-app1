@@ -1,41 +1,37 @@
 import streamlit as st
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
+from transformers import pipeline
 
-# تحميل النموذج والتوكن مع التخزين المؤقت
+st.set_page_config(page_title="BERT Sentiment Analyzer", page_icon="💬", layout="wide")
+
+st.markdown("<h1 style='text-align: center; color: #4B8BBE;'>🔍 Application d'Analyse des Sentiments BERT 🔍</h1>", unsafe_allow_html=True)
+st.markdown("<h4 style='text-align: center; color: grey;'>Analyse des sentiments (Positif, Neutre, Négatif) avec le modèle BERT</h4>", unsafe_allow_html=True)
+
+# Chargement du modèle BERT pour l'analyse
 @st.cache_resource
 def load_model():
-    model_name = "cardiffnlp/twitter-roberta-base-sentiment"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSequenceClassification.from_pretrained(model_name)
+    return pipeline("sentiment-analysis", model="nlptown/bert-base-multilingual-uncased-sentiment")
 
-    # استخدام CPU فقط بوضع device=-1
-    classifier = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device=-1)
-    return classifier
+nlp = load_model()
 
-# تحليل المشاعر
-def analyze_sentiment(text):
-    classifier = load_model()
-    result = classifier(text)[0]
-    label_map = {
-        'LABEL_0': 'سلبي 😠',
-        'LABEL_1': 'محايد 😐',
-        'LABEL_2': 'إيجابي 😊'
-    }
-    sentiment = label_map[result['label']]
-    score = round(result['score'] * 100, 2)
-    return sentiment, score
+# Interface utilisateur
+text_input = st.text_area("📝 Entrez un texte à analyser", height=150)
 
-# واجهة Streamlit
-st.set_page_config(page_title="تحليل المشاعر - RoBERTa", layout="centered")
-st.title("🤖 RoBERTa Sentiment Analysis App")
-st.markdown("**Analyse des sentiments (Positif, Neutre, Négatif) avec le modèle RoBERTa**")
-
-text_input = st.text_area("📝 Entrez un texte à analyser", "")
-
-if st.button("Analyser"):
-    if text_input.strip():
+if st.button("🔍 Analyser"):
+    if text_input.strip() != "":
         with st.spinner("Analyse en cours..."):
-            sentiment, score = analyze_sentiment(text_input)
-            st.success(f"**Résultat** : {sentiment} (confiance : {score}%)")
+            result = nlp(text_input)
+            label = result[0]['label']
+            score = result[0]['score']
+
+            st.markdown(f"### ✅ Résultat : **{label}**")
+            st.markdown(f"### 🔢 Score : `{round(score*100, 2)}%`")
+
+            if "1" in label or "2" in label:
+                st.error("😞 Négatif")
+            elif "3" in label:
+                st.info("😐 Neutre")
+            else:
+                st.success("😊 Positif")
     else:
-        st.warning("Veuillez entrer un texte.")
+        st.warning("Veuillez entrer un texte d'abord ❗")
+
