@@ -10,13 +10,13 @@ def load_model():
     model = AutoModelForSequenceClassification.from_pretrained(model_name)
 
     # تحديد الجهاز CPU بشكل صريح
-    device = torch.device("cpu")  # إذا كان لديك GPU، يمكن تغييرها إلى "cuda"
-    
+    device = torch.device("cpu")  # لضمان العمل على CPU فقط
+
     # نقل النموذج إلى الجهاز المحدد
     model.to(device)
 
     # إرجاع النموذج مع الأنابيب
-    return pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device=-1)  # device=-1 يعني استخدام CPU
+    return pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device=-1)  # استخدم -1 لاستخدام CPU
 
 # تحليل النص
 def analyze_sentiment(text):
