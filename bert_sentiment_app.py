@@ -24,7 +24,7 @@ def analyze_sentiment(text):
     encoded_input = tokenizer(text, return_tensors='pt', truncation=True)
     with torch.no_grad():
         output = model(**encoded_input)
-    scores = torch.nn.functional.softmax(output.logits, dim=1).numpy()[0]
+    scores = torch.nn.functional.softmax(output.logits, dim=1)[0].cpu().numpy()
     labels = ['Négatif 😞', 'Neutre 😐', 'Positif 😀']
     max_idx = np.argmax(scores)
     return labels[max_idx], scores[max_idx]
