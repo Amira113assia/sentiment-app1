@@ -11,7 +11,7 @@ st.markdown("<h4 style='text-align: center; color: grey;'>Analyse des sentiments
 # تحميل النموذج
 @st.cache_resource
 def load_model():
-   return pipeline("sentiment-analysis", model="cardiffnlp/twitter-roberta-base-sentiment", device=-1)
+   return pipeline("sentiment-analysis",model="siebert/sentiment-roberta-large-english", device=-1)
 
 model = load_model()
 
