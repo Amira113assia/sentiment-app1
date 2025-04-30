@@ -8,7 +8,15 @@ def load_model():
     model_name = "cardiffnlp/twitter-roberta-base-sentiment"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSequenceClassification.from_pretrained(model_name)
-    return pipeline("sentiment-analysis", model=model, tokenizer=tokenizer)
+
+    # تحديد الجهاز CPU بشكل صريح
+    device = torch.device("cpu")  # إذا كان لديك GPU، يمكن تغييرها إلى "cuda"
+    
+    # نقل النموذج إلى الجهاز المحدد
+    model.to(device)
+
+    # إرجاع النموذج مع الأنابيب
+    return pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device=-1)  # device=-1 يعني استخدام CPU
 
 # تحليل النص
 def analyze_sentiment(text):
