@@ -1,45 +1,44 @@
 import streamlit as st
 from transformers import pipeline
 
-# إعداد الصفحة
-st.set_page_config(page_title="RoBERTa Sentiment Analyzer", page_icon="🤖", layout="wide")
+# --- إعداد الواجهة ---
+st.set_page_config(page_title="RoBERTa Sentiment App", page_icon="🤖", layout="centered")
 
-# عنوان التطبيق
-st.markdown("<h1 style='text-align: center; color: #6A5ACD;'>🤖 RoBERTa Sentiment Analysis App</h1>", unsafe_allow_html=True)
-st.markdown("<h4 style='text-align: center; color: grey;'>Analyse des sentiments (Positif, Neutre, Négatif) avec le modèle RoBERTa</h4>", unsafe_allow_html=True)
-
-# تحميل النموذج
+# --- تحميل النموذج (مع تخزين في الكاش) ---
 @st.cache_resource
 def load_model():
-   return pipeline("sentiment-analysis",model="siebert/sentiment-roberta-large-english", device=-1)
+    return pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english")
 
 model = load_model()
 
-# حقل الإدخال
+# --- عنوان التطبيق ---
+st.title("🤖 RoBERTa Sentiment Analysis App")
+st.markdown("### Analyse des sentiments (Positif ou Négatif) avec le modèle DistilBERT")
+
+# --- إدخال النص ---
 text_input = st.text_area("📝 Entrez un texte à analyser", height=150)
 
-# دالة التحليل
-def analyze_sentiment(text):
-    result = model(text)[0]
-    label = result['label']
-    score = result['score']
-    
-    # تصنيف المشاعر حسب النموذج
-    if label == "LABEL_0":
-        sentiment = "😞 Négatif"
-    elif label == "LABEL_1":
-        sentiment = "😐 Neutre"
+# --- زر التحليل ---
+if st.button("Analyser le texte"):
+    if not text_input.strip():
+        st.warning("⚠️ Veuillez entrer un texte à analyser.")
     else:
-        sentiment = "😊 Positif"
+        try:
+            result = model(text_input)[0]
+            label = result['label']
+            score = round(result['score'] * 100, 2)
 
-    return sentiment, score
+            if label == "POSITIVE":
+                st.success(f"😊 Sentiment détecté : **Positif** ({score}%)")
+            elif label == "NEGATIVE":
+                st.error(f"😞 Sentiment détecté : **Négatif** ({score}%)")
+            else:
+                st.info(f"😐 Sentiment détecté : **{label}** ({score}%)")
 
-# زر التحليل
-if st.button("🔍 Analyser"):
-    if text_input.strip():
-        with st.spinner("Analyse en cours..."):
-            sentiment, score = analyze_sentiment(text_input)
-            st.markdown(f"### ✅ Résultat : **{sentiment}**")
-            st.markdown(f"### 🔢 Score de confiance : `{score:.2%}`")
-    else:
-        st.warning("⚠️ Veuillez entrer un texte avant d'analyser.")
+        except Exception as e:
+            st.error("❌ Une erreur est survenue lors de l'analyse.")
+            st.exception(e)
+
+# --- Footer ---
+st.markdown("---")
+st.markdown("Développé par **Amira ❤️** - Powered by Hugging Face & Streamlit")
